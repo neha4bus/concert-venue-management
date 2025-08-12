@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(210 25% 7.8431%);
+  --card: hsl(180 6.6667% 97.0588%);
+  --card-foreground: hsl(210 25% 7.8431%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(210 25% 7.8431%);
+  --primary: hsl(207.0513 79.4118% 40.1961%);
+  --primary-dark: hsl(207.5000 78.8235% 36.0784%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(45.0000 100% 51.3725%);
+  --secondary-foreground: hsl(210 25% 7.8431%);
+  --success: hsl(122.3944 39.3939% 49.0196%);
+  --error: hsl(3.7736 77.6119% 56.0784%);
+  --warning: hsl(35.7895 100% 50.0000%);
+  --surface: hsl(0 0% 100%);
+  --surface-background: hsl(0 0% 98.0392%);
+  --muted: hsl(240 1.9608% 90%);
+  --muted-foreground: hsl(210 25% 7.8431%);
+  --accent: hsl(211.5789 51.3514% 92.7451%);
+  --accent-foreground: hsl(203.8863 88.2845% 53.1373%);
+  --destructive: hsl(356.3033 90.5579% 54.3137%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(201.4286 30.4348% 90.9804%);
+  --input: hsl(200 23.0769% 97.4510%);
+  --ring: hsl(202.8169 89.1213% 53.1373%);
+  --font-roboto: 'Roboto', sans-serif;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: hsl(0 0% 0%);
+  --foreground: hsl(200 6.6667% 91.1765%);
+  --card: hsl(228 9.8039% 10%);
+  --card-foreground: hsl(0 0% 85.0980%);
+  --popover: hsl(0 0% 0%);
+  --popover-foreground: hsl(200 6.6667% 91.1765%);
+  --primary: hsl(207.0513 79.4118% 40.1961%);
+  --primary-dark: hsl(207.5000 78.8235% 36.0784%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(45.0000 100% 51.3725%);
+  --secondary-foreground: hsl(210 25% 7.8431%);
+  --surface: hsl(228 9.8039% 10%);
+  --surface-background: hsl(0 0% 0%);
+  --muted: hsl(0 0% 9.4118%);
+  --muted-foreground: hsl(210 3.3898% 46.2745%);
+  --accent: hsl(205.7143 70% 7.8431%);
+  --accent-foreground: hsl(203.7736 87.6033% 52.5490%);
+  --destructive: hsl(356.3033 90.5579% 54.3137%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(210 5.2632% 14.9020%);
+  --input: hsl(207.6923 27.6596% 18.4314%);
+  --ring: hsl(202.8169 89.1213% 53.1373%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-roboto antialiased bg-surface-background text-foreground;
+  }
+}
+
+@layer components {
+  .seat {
+    @apply transition-all duration-200 cursor-pointer hover:scale-110;
+  }
+  
+  .seat.available {
+    @apply bg-success text-white;
+  }
+  
+  .seat.occupied {
+    @apply bg-error text-white cursor-not-allowed;
+  }
+  
+  .seat.selected {
+    @apply bg-secondary text-foreground scale-110;
+  }
+  
+  .qr-scanner-frame {
+    @apply relative w-64 h-64 mx-auto border-2 border-primary rounded-xl bg-primary bg-opacity-10;
+  }
+  
+  .scanner-corner {
+    @apply absolute w-5 h-5 border-[3px] border-primary;
+  }
+  
+  .scanner-corner.tl {
+    @apply -top-0.5 -left-0.5 border-r-0 border-b-0;
+  }
+  
+  .scanner-corner.tr {
+    @apply -top-0.5 -right-0.5 border-l-0 border-b-0;
+  }
+  
+  .scanner-corner.bl {
+    @apply -bottom-0.5 -left-0.5 border-r-0 border-t-0;
+  }
+  
+  .scanner-corner.br {
+    @apply -bottom-0.5 -right-0.5 border-l-0 border-t-0;
+  }
+  
+  .fade-in {
+    @apply animate-in fade-in-0 slide-in-from-bottom-2 duration-300;
+  }
+}
