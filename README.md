@@ -14,6 +14,13 @@ Concert Venue Manager is a full-stack web application for managing concert ticke
 - **Dashboard Analytics**: Real-time statistics for venue operations
 - **Security**: Rate limiting, input validation, and secure data handling
 
+✅ What's New:
+🔗 Google Sheets as Database
+Real-time storage directly in Google Sheets
+Automatic sheet creation with proper headers
+QR codes stored as data URLs in spreadsheet cells
+Live synchronization - changes appear instantly in sheets
+
 ## System Architecture
 
 ### Frontend Architecture
