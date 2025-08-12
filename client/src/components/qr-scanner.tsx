@@ -25,7 +25,6 @@ export default function QRScanner({ open, onClose, onScanSuccess }: QRScannerPro
       return response.json();
     },
     onSuccess: (ticket: Ticket) => {
-      console.log("Ticket found by QR scan:", ticket);
       toast({
         title: "QR Code Scanned Successfully",
         description: `Found ticket for ${ticket.guestName}`,
@@ -69,9 +68,9 @@ export default function QRScanner({ open, onClose, onScanSuccess }: QRScannerPro
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* QR Scanner Frame */}
+          {/* QR Scanner Frame - Demo Mode */}
           <div className="text-center">
-            <div className="qr-scanner-frame">
+            <div className="qr-scanner-frame relative">
               <div className="scanner-corner tl"></div>
               <div className="scanner-corner tr"></div>
               <div className="scanner-corner bl"></div>
@@ -79,9 +78,13 @@ export default function QRScanner({ open, onClose, onScanSuccess }: QRScannerPro
               <div className="flex items-center justify-center h-full">
                 <Camera className="text-4xl text-primary opacity-50 w-12 h-12" />
               </div>
+              {/* Demo Mode Indicator */}
+              <div className="absolute top-2 left-2 right-2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 text-xs px-2 py-1 rounded">
+                Demo Mode - Camera not available
+              </div>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
-              Position the QR code within the frame
+              Camera scanning not implemented in demo. Use manual input below.
             </p>
           </div>
 

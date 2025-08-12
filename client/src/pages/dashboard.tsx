@@ -19,7 +19,6 @@ export default function Dashboard() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
   const handleQRScanSuccess = (ticket: Ticket) => {
-    console.log("QR Scan successful, showing ticket details for:", ticket.guestName);
     setSelectedTicket(ticket);
     setShowQRScanner(false);
     setShowTicketDetails(true);

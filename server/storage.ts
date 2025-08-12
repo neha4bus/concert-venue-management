@@ -1,5 +1,6 @@
 import { type Ticket, type InsertTicket, type Seat, type InsertSeat } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { getVenueConfig, generateSeats } from "./config/venue";
 
 export interface IStorage {
   // Ticket operations
@@ -7,6 +8,10 @@ export interface IStorage {
   getTicketByTicketId(ticketId: string): Promise<Ticket | undefined>;
   getTicketByQRCode(qrCode: string): Promise<Ticket | undefined>;
   getAllTickets(): Promise<Ticket[]>;
+  getTicketsPaginated(page: number, limit: number, filters?: { search?: string; status?: string }): Promise<{
+    tickets: Ticket[];
+    total: number;
+  }>;
   createTicket(ticket: InsertTicket): Promise<Ticket>;
   updateTicket(id: string, updates: Partial<Ticket>): Promise<Ticket>;
   
@@ -15,6 +20,13 @@ export interface IStorage {
   getSeat(seatNumber: string): Promise<Seat | undefined>;
   createSeat(seat: InsertSeat): Promise<Seat>;
   updateSeat(seatNumber: string, updates: Partial<Seat>): Promise<Seat>;
+  
+  // Security: Atomic seat assignment
+  assignSeatAtomically(ticketId: string, seatNumber: string, ticketIdForSeat: string): Promise<{
+    success: boolean;
+    error?: string;
+    ticket?: Ticket;
+  }>;
   
   // Statistics
   getStats(): Promise<{
@@ -28,26 +40,26 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private tickets: Map<string, Ticket> = new Map();
   private seats: Map<string, Seat> = new Map();
+  private operationLocks: Map<string, Promise<any>> = new Map(); // For atomic operations
 
   constructor() {
     this.initializeSeats();
   }
 
   private initializeSeats() {
-    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-    rows.forEach(row => {
-      for (let i = 1; i <= 20; i++) {
-        const seatNumber = `${row}-${i.toString().padStart(2, '0')}`;
-        const seat: Seat = {
-          id: randomUUID(),
-          seatNumber,
-          row,
-          seatIndex: i.toString().padStart(2, '0'),
-          isOccupied: false,
-          ticketId: null
-        };
-        this.seats.set(seatNumber, seat);
-      }
+    const venueConfig = getVenueConfig();
+    const seatData = generateSeats(venueConfig);
+    
+    seatData.forEach(seatInfo => {
+      const seat: Seat = {
+        id: randomUUID(),
+        seatNumber: seatInfo.seatNumber,
+        row: seatInfo.row,
+        seatIndex: seatInfo.seatIndex,
+        isOccupied: false,
+        ticketId: null
+      };
+      this.seats.set(seat.seatNumber, seat);
     });
   }
 
@@ -65,6 +77,39 @@ export class MemStorage implements IStorage {
 
   async getAllTickets(): Promise<Ticket[]> {
     return Array.from(this.tickets.values());
+  }
+
+  async getTicketsPaginated(page: number, limit: number, filters?: { search?: string; status?: string }): Promise<{
+    tickets: Ticket[];
+    total: number;
+  }> {
+    let tickets = Array.from(this.tickets.values());
+    
+    // Apply filters
+    if (filters?.search) {
+      const searchLower = filters.search.toLowerCase();
+      tickets = tickets.filter(ticket => 
+        ticket.guestName.toLowerCase().includes(searchLower) ||
+        ticket.email.toLowerCase().includes(searchLower) ||
+        ticket.ticketId.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (filters?.status && filters.status !== 'all') {
+      tickets = tickets.filter(ticket => ticket.status === filters.status);
+    }
+    
+    // Sort by creation date (newest first)
+    tickets.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+    
+    const total = tickets.length;
+    const startIndex = (page - 1) * limit;
+    const paginatedTickets = tickets.slice(startIndex, startIndex + limit);
+    
+    return {
+      tickets: paginatedTickets,
+      total
+    };
   }
 
   async createTicket(insertTicket: InsertTicket): Promise<Ticket> {
@@ -122,6 +167,83 @@ export class MemStorage implements IStorage {
     const updatedSeat = { ...existingSeat, ...updates };
     this.seats.set(seatNumber, updatedSeat);
     return updatedSeat;
+  }
+
+  // Security: Atomic seat assignment to prevent race conditions
+  async assignSeatAtomically(ticketId: string, seatNumber: string, ticketIdForSeat: string): Promise<{
+    success: boolean;
+    error?: string;
+    ticket?: Ticket;
+  }> {
+    const lockKey = `seat-${seatNumber}`;
+    
+    // Wait for any existing operation on this seat to complete
+    if (this.operationLocks.has(lockKey)) {
+      await this.operationLocks.get(lockKey);
+    }
+    
+    // Create a new operation lock
+    const operation = this._performSeatAssignment(ticketId, seatNumber, ticketIdForSeat);
+    this.operationLocks.set(lockKey, operation);
+    
+    try {
+      const result = await operation;
+      return result;
+    } finally {
+      // Clean up the lock
+      this.operationLocks.delete(lockKey);
+    }
+  }
+  
+  private async _performSeatAssignment(ticketId: string, seatNumber: string, ticketIdForSeat: string): Promise<{
+    success: boolean;
+    error?: string;
+    ticket?: Ticket;
+  }> {
+    // Check if ticket exists
+    const ticket = this.tickets.get(ticketId);
+    if (!ticket) {
+      return { success: false, error: "Ticket not found" };
+    }
+    
+    // Check if seat exists
+    const seat = this.seats.get(seatNumber);
+    if (!seat) {
+      return { success: false, error: "Seat not found" };
+    }
+    
+    // Check if seat is already occupied
+    if (seat.isOccupied) {
+      return { success: false, error: "Seat is already occupied" };
+    }
+    
+    // Check if ticket already has a seat assigned
+    if (ticket.seatNumber) {
+      return { success: false, error: "Ticket already has a seat assigned" };
+    }
+    
+    // Perform atomic update
+    try {
+      // Update seat
+      const updatedSeat = { ...seat, isOccupied: true, ticketId: ticketIdForSeat };
+      this.seats.set(seatNumber, updatedSeat);
+      
+      // Update ticket
+      const updatedTicket = { 
+        ...ticket, 
+        seatNumber, 
+        status: "assigned" as const, 
+        assignedAt: new Date() 
+      };
+      this.tickets.set(ticketId, updatedTicket);
+      
+      return { success: true, ticket: updatedTicket };
+    } catch (error) {
+      // Rollback on error
+      this.seats.set(seatNumber, seat);
+      this.tickets.set(ticketId, ticket);
+      return { success: false, error: "Failed to assign seat due to internal error" };
+    }
   }
 
   async getStats() {

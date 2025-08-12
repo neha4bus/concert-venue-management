@@ -61,6 +61,13 @@ export default function SeatMap({ open, onClose, ticket, onSeatAssigned }: SeatM
     setSelectedSeat(seat.seatNumber);
   };
 
+  const handleSeatKeyDown = (event: React.KeyboardEvent, seat: Seat) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleSeatClick(seat);
+    }
+  };
+
   const handleConfirmAssignment = () => {
     if (!selectedSeat) {
       toast({
@@ -159,7 +166,11 @@ export default function SeatMap({ open, onClose, ticket, onSeatAssigned }: SeatM
                             : 'available'
                         }`}
                         onClick={() => seat && handleSeatClick(seat)}
+                        onKeyDown={(e) => seat && handleSeatKeyDown(e, seat)}
                         disabled={seat?.isOccupied}
+                        aria-label={`Seat ${seatNumber} ${seat?.isOccupied ? 'occupied' : isSelected ? 'selected' : 'available'}`}
+                        aria-pressed={isSelected}
+                        tabIndex={seat?.isOccupied ? -1 : 0}
                       >
                         {index + 1}
                       </button>
@@ -187,7 +198,11 @@ export default function SeatMap({ open, onClose, ticket, onSeatAssigned }: SeatM
                             : 'available'
                         }`}
                         onClick={() => seat && handleSeatClick(seat)}
+                        onKeyDown={(e) => seat && handleSeatKeyDown(e, seat)}
                         disabled={seat?.isOccupied}
+                        aria-label={`Seat ${seatNumber} ${seat?.isOccupied ? 'occupied' : isSelected ? 'selected' : 'available'}`}
+                        aria-pressed={isSelected}
+                        tabIndex={seat?.isOccupied ? -1 : 0}
                       >
                         {seatIndex}
                       </button>

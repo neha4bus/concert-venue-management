@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Table,
@@ -32,20 +32,38 @@ export default function TicketTable({ onViewTicket, onAssignSeat }: TicketTableP
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const { data: tickets, isLoading } = useQuery<Ticket[]>({
-    queryKey: ["/api/tickets"],
+  const { data: ticketsResponse, isLoading } = useQuery<{
+    tickets: Ticket[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }>({
+    queryKey: ["/api/tickets", { search: searchQuery, status: statusFilter }],
   });
 
-  const filteredTickets = tickets?.filter((ticket: Ticket) => {
-    const matchesSearch = 
-      ticket.guestName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.ticketId.toLowerCase().includes(searchQuery.toLowerCase());
+  const tickets = ticketsResponse?.tickets || [];
+  const pagination = ticketsResponse?.pagination;
 
-    const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
+  // Memoize filtered tickets to prevent unnecessary re-renders
+  const filteredTickets = useMemo(() => {
+    if (!tickets) return [];
+    
+    return tickets.filter((ticket: Ticket) => {
+      const matchesSearch = 
+        ticket.guestName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ticket.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ticket.ticketId.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesSearch && matchesStatus;
-  }) || [];
+      const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [tickets, searchQuery, statusFilter]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

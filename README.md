@@ -4,9 +4,15 @@
 
 Concert Venue Manager is a full-stack web application for managing concert ticket sales, seat assignments, and venue check-ins. The system provides a comprehensive dashboard for venue staff to handle ticket operations including QR code scanning, seat management, and guest check-ins. Built with modern web technologies, it features a React frontend with shadcn/ui components and an Express.js backend with PostgreSQL database integration.
 
-## User Preferences
+## Features
 
-Preferred communication style: Simple, everyday language.
+- **Ticket Management**: Create, view, and manage concert tickets with unique IDs
+- **QR Code Integration**: Generate and scan QR codes for ticket validation
+- **Seat Assignment**: Interactive seat map with real-time availability
+- **CSV Import**: Bulk ticket import from CSV files or Google Sheets
+- **Check-in System**: Guest check-in functionality with status tracking
+- **Dashboard Analytics**: Real-time statistics for venue operations
+- **Security**: Rate limiting, input validation, and secure data handling
 
 ## System Architecture
 
@@ -68,6 +74,71 @@ Preferred communication style: Simple, everyday language.
 - **ESBuild**: JavaScript bundler for production builds
 - **TSX**: TypeScript execution for development
 
-### Replit Integration
-- **Vite Plugins**: Custom Replit plugins for development environment (@replit/vite-plugin-*)
-- **Development Banner**: Replit development environment integration
+### Development Tools
+- **Vite**: Fast build tool and development server with HMR
+- **TypeScript**: Full type safety across the application
+
+## Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd concert-venue-manager
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database URL and other configuration
+   ```
+
+4. **Run database migrations** (if using PostgreSQL)
+   ```bash
+   npm run db:push
+   ```
+
+## Development
+
+**Start the development server**
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5000`
+
+**Other available scripts:**
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run check` - Type check with TypeScript
+- `npm test` - Run tests
+- `npm run lint` - Lint code
+
+## Production Deployment
+
+1. **Build the application**
+   ```bash
+   npm run build
+   ```
+
+2. **Set environment variables**
+   - `DATABASE_URL` - PostgreSQL connection string
+   - `NODE_ENV=production`
+   - `PORT` - Server port (default: 5000)
+
+3. **Start the production server**
+   ```bash
+   npm start
+   ```
+
+## Environment Variables
+
+- `DATABASE_URL` - PostgreSQL database connection string
+- `NODE_ENV` - Environment (development/production)
+- `PORT` - Server port (default: 5000)
+- `LOG_LEVEL` - Logging level (ERROR/WARN/INFO/DEBUG)
+- `VENUE_TYPE` - Venue configuration (default/small/large)
