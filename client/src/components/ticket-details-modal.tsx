@@ -151,6 +151,24 @@ export default function TicketDetailsModal({
             </label>
             <div>{getStatusBadge(ticket.status)}</div>
           </div>
+
+          {/* QR Code Display */}
+          <div className="border-t pt-4">
+            <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground mb-2">
+              <TicketIcon className="w-4 h-4" />
+              QR Code
+            </label>
+            <div className="flex justify-center">
+              <img 
+                src={ticket.qrCode} 
+                alt={`QR Code for ${ticket.ticketId}`}
+                className="max-w-48 max-h-48 border rounded-lg"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Scan this QR code for ticket validation
+            </p>
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -174,14 +192,7 @@ export default function TicketDetailsModal({
               {checkInMutation.isPending ? "Checking In..." : "Check In"}
             </Button>
           )}
-          <Button
-            onClick={handlePrint}
-            variant="outline"
-            className="flex-1"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print Ticket
-          </Button>
+
         </div>
       </DialogContent>
     </Dialog>

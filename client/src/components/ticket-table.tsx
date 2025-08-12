@@ -200,13 +200,7 @@ export default function TicketTable({ onViewTicket, onAssignSeat }: TicketTableP
                             <User2 className="w-4 h-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Printer className="w-4 h-4" />
-                        </Button>
+
                       </div>
                     </TableCell>
                   </TableRow>
