@@ -25,6 +25,7 @@ export default function QRScanner({ open, onClose, onScanSuccess }: QRScannerPro
       return response.json();
     },
     onSuccess: (ticket: Ticket) => {
+      console.log("Ticket found by QR scan:", ticket);
       toast({
         title: "QR Code Scanned Successfully",
         description: `Found ticket for ${ticket.guestName}`,
