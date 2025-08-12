@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Music, LogOut, QrCode, Plus } from "lucide-react";
+import { Music, LogOut, QrCode, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StatsDashboard from "@/components/stats-dashboard";
 import QRScanner from "@/components/qr-scanner";
@@ -7,6 +7,7 @@ import SeatMap from "@/components/seat-map";
 import TicketDetailsModal from "@/components/ticket-details-modal";
 import TicketTable from "@/components/ticket-table";
 import CreateTicketForm from "@/components/create-ticket-form";
+import ImportTicketsForm from "@/components/import-tickets-form";
 import type { Ticket } from "@shared/schema";
 
 export default function Dashboard() {
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const [showSeatMap, setShowSeatMap] = useState(false);
   const [showTicketDetails, setShowTicketDetails] = useState(false);
   const [showCreateTicket, setShowCreateTicket] = useState(false);
+  const [showImportTickets, setShowImportTickets] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
   const handleQRScanSuccess = (ticket: Ticket) => {
@@ -68,7 +70,7 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="bg-surface rounded-lg shadow p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button
               onClick={() => setShowQRScanner(true)}
               className="bg-primary hover:bg-primary-dark text-primary-foreground px-6 py-3 h-auto"
@@ -84,6 +86,14 @@ export default function Dashboard() {
                 <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
               </svg>
               Assign Seats
+            </Button>
+            <Button
+              onClick={() => setShowImportTickets(true)}
+              variant="outline"
+              className="border-warning text-warning hover:bg-warning hover:text-white px-6 py-3 h-auto"
+            >
+              <Upload className="w-5 h-5 mr-2" />
+              Import Tickets
             </Button>
             <Button
               onClick={() => setShowCreateTicket(true)}
@@ -139,6 +149,11 @@ export default function Dashboard() {
       <CreateTicketForm
         open={showCreateTicket}
         onClose={() => setShowCreateTicket(false)}
+      />
+
+      <ImportTicketsForm
+        open={showImportTickets}
+        onClose={() => setShowImportTickets(false)}
       />
     </div>
   );
