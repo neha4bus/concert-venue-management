@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { insertTicketSchema } from "@shared/schema";
+import { storage } from "./storage/index";
+import { createTicketSchema } from "@shared/schema";
 import { generateQRCode } from "./utils/qr-generator";
 import { z } from "zod";
 import { parse } from "csv-parse/sync";
@@ -165,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new ticket
   app.post("/api/tickets", rateLimit(10, 60000), async (req, res) => { // Rate limit: 10 tickets per minute
     try {
-      const ticketData = insertTicketSchema.parse(req.body);
+      const ticketData = createTicketSchema.parse(req.body);
       
       // Security: Additional validation
       if (!ticketData.guestName || ticketData.guestName.trim().length === 0) {

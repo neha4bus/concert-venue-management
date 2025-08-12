@@ -32,11 +32,20 @@ export const insertTicketSchema = createInsertSchema(tickets).omit({
   checkedInAt: true,
 });
 
+// Schema for frontend ticket creation (only requires guestName and email)
+export const createTicketSchema = z.object({
+  guestName: z.string().min(1, "Guest name is required").max(100, "Guest name too long"),
+  email: z.string().email("Valid email address is required").max(255, "Email too long"),
+  status: z.string().optional(),
+  seatNumber: z.string().optional().nullable(),
+});
+
 export const insertSeatSchema = createInsertSchema(seats).omit({
   id: true,
 });
 
 export type InsertTicket = z.infer<typeof insertTicketSchema>;
+export type CreateTicket = z.infer<typeof createTicketSchema>;
 export type Ticket = typeof tickets.$inferSelect;
 export type InsertSeat = z.infer<typeof insertSeatSchema>;
 export type Seat = typeof seats.$inferSelect;
