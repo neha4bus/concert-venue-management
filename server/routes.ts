@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTicketSchema } from "@shared/schema";
-import QRCode from "qrcode";
+import { generateQRCode } from "./utils/qr-generator";
 import { z } from "zod";
 import { parse } from "csv-parse/sync";
 import { logger } from "./utils/logger";
@@ -187,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ticketId = `TKT-2024-${String(Date.now()).slice(-6)}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
       
       // Generate QR code
-      const qrCode = await QRCode.toDataURL(ticketId);
+      const qrCode = await generateQRCode(ticketId);
       
       const ticket = await storage.createTicket({
         ...sanitizedData,
@@ -473,7 +473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const ticketId = `TKT-2024-${String(Date.now()).slice(-6)}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
           
           // Generate QR code
-          const qrCode = await QRCode.toDataURL(ticketId);
+          const qrCode = await generateQRCode(ticketId);
           
           // Determine seat assignment from CSV data
           let seatNumber = null;

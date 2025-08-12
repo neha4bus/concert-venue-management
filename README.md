@@ -135,10 +135,78 @@ The application will be available at `http://localhost:5000`
    npm start
    ```
 
+## Google Sheets Setup Guide
+
+### Step 1: Create Google Cloud Project
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable the Google Sheets API
+
+### Step 2: Create Service Account
+1. Go to "IAM & Admin" → "Service Accounts"
+2. Click "Create Service Account"
+3. Give it a name (e.g., "venue-manager")
+4. Click "Create and Continue"
+5. Skip role assignment for now
+6. Click "Done"
+
+### Step 3: Generate Key
+1. Click on your service account
+2. Go to "Keys" tab
+3. Click "Add Key" → "Create New Key"
+4. Choose JSON format
+5. Download the key file
+
+### Step 4: Create Google Sheet
+1. Create a new Google Sheet
+2. Copy the spreadsheet ID from the URL
+3. Share the sheet with your service account email (from the JSON file)
+4. Give it "Editor" permissions
+
+### Step 5: Configure Environment
+```bash
+STORAGE_TYPE=google-sheets
+GOOGLE_SHEETS_ID=your_spreadsheet_id_from_url
+GOOGLE_SERVICE_ACCOUNT_EMAIL=your-service-account@project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key from JSON file\n-----END PRIVATE KEY-----"
+```
+
+The application will automatically create the necessary sheets and columns!
+
+## Storage Options
+
+The application supports two storage backends:
+
+### 1. Google Sheets (Recommended)
+Store all data directly in Google Sheets with automatic QR code generation.
+
+**Setup:**
+1. Create a Google Cloud Project
+2. Enable Google Sheets API
+3. Create a Service Account and download the JSON key
+4. Create a Google Sheet and share it with the service account email
+5. Set environment variables (see below)
+
+### 2. In-Memory Storage
+For development and testing only. Data is lost when server restarts.
+
 ## Environment Variables
 
-- `DATABASE_URL` - PostgreSQL database connection string
+### Storage Configuration
+- `STORAGE_TYPE` - Storage backend (google-sheets/memory)
+
+### Google Sheets Configuration
+- `GOOGLE_SHEETS_ID` - Your Google Sheets spreadsheet ID
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL` - Service account email
+- `GOOGLE_PRIVATE_KEY` - Service account private key
+- `TICKETS_SHEET_NAME` - Sheet name for tickets (default: Tickets)
+- `SEATS_SHEET_NAME` - Sheet name for seats (default: Seats)
+
+### Server Configuration
 - `NODE_ENV` - Environment (development/production)
 - `PORT` - Server port (default: 5000)
 - `LOG_LEVEL` - Logging level (ERROR/WARN/INFO/DEBUG)
 - `VENUE_TYPE` - Venue configuration (default/small/large)
+
+### Optional (PostgreSQL)
+- `DATABASE_URL` - PostgreSQL database connection string
