@@ -165,6 +165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new ticket
   app.post("/api/tickets", rateLimit(10, 60000), async (req, res) => { // Rate limit: 10 tickets per minute
     try {
+      // Debug: Log the incoming request body
+      logger.info('Incoming ticket creation request', { body: req.body });
+      
       const ticketData = createTicketSchema.parse(req.body);
       
       // Security: Additional validation

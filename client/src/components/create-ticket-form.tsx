@@ -10,7 +10,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
-import { insertTicketSchema } from "@shared/schema";
+import { createTicketSchema } from "@shared/schema";
 import { z } from "zod";
 
 interface CreateTicketFormProps {
@@ -18,7 +18,7 @@ interface CreateTicketFormProps {
   onClose: () => void;
 }
 
-const formSchema = insertTicketSchema.pick({
+const formSchema = createTicketSchema.pick({
   guestName: true,
   email: true,
 });
