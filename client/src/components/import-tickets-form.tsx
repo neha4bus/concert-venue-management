@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileSpreadsheet, Download, AlertCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, Download, AlertCircle, Users } from "lucide-react";
 
 interface ImportTicketsFormProps {
   open: boolean;
@@ -18,22 +19,27 @@ export default function ImportTicketsForm({ open, onClose }: ImportTicketsFormPr
   const [csvData, setCsvData] = useState("");
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
   const [importMethod, setImportMethod] = useState<"csv" | "url">("csv");
+  const [autoAssignSeats, setAutoAssignSeats] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const importTicketsMutation = useMutation({
-    mutationFn: async (data: { csvData?: string; googleSheetUrl?: string }) => {
+    mutationFn: async (data: { csvData?: string; googleSheetUrl?: string; autoAssignSeats?: boolean }) => {
       const response = await apiRequest("POST", "/api/tickets/import", data);
       return response.json();
     },
     onSuccess: (result) => {
+      const seatsMessage = autoAssignSeats && result.seatsAssigned 
+        ? ` ${result.seatsAssigned} seats assigned automatically.`
+        : '';
       toast({
         title: "Import Successful",
-        description: `Successfully imported ${result.imported} tickets. ${result.errors?.length || 0} errors occurred.`,
+        description: `Successfully imported ${result.imported} tickets.${seatsMessage} ${result.errors?.length || 0} errors occurred.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/seats"] });
       handleClose();
     },
     onError: () => {
@@ -84,8 +90,8 @@ export default function ImportTicketsForm({ open, onClose }: ImportTicketsFormPr
 
     importTicketsMutation.mutate(
       importMethod === "csv" 
-        ? { csvData } 
-        : { googleSheetUrl }
+        ? { csvData, autoAssignSeats } 
+        : { googleSheetUrl, autoAssignSeats }
     );
   };
 
@@ -93,6 +99,7 @@ export default function ImportTicketsForm({ open, onClose }: ImportTicketsFormPr
     setCsvData("");
     setGoogleSheetUrl("");
     setImportMethod("csv");
+    setAutoAssignSeats(true);
     onClose();
   };
 
@@ -161,6 +168,26 @@ export default function ImportTicketsForm({ open, onClose }: ImportTicketsFormPr
                 <Download className="w-4 h-4 mr-1" />
                 Template
               </Button>
+            </div>
+          </div>
+
+          {/* Auto-assign Seats Option */}
+          <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="auto-assign"
+                checked={autoAssignSeats}
+                onCheckedChange={(checked) => setAutoAssignSeats(checked as boolean)}
+              />
+              <div className="flex-1">
+                <Label htmlFor="auto-assign" className="text-green-900 dark:text-green-100 font-medium">
+                  Auto-assign seats during import
+                </Label>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  Automatically assign available seats to imported guests (recommended)
+                </p>
+              </div>
+              <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
           </div>
 

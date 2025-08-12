@@ -163,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import tickets from CSV or Google Sheets
   app.post("/api/tickets/import", async (req, res) => {
     try {
-      const { csvData, googleSheetUrl } = req.body;
+      const { csvData, googleSheetUrl, autoAssignSeats = false } = req.body;
       let importData = csvData;
 
       // If Google Sheets URL is provided, fetch the CSV data
@@ -205,8 +205,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const results = {
         imported: 0,
+        seatsAssigned: 0,
         errors: [] as Array<{ row: number; error: string; data: any }>
       };
+
+      // Get available seats for auto-assignment
+      let availableSeats: string[] = [];
+      if (autoAssignSeats) {
+        const allSeats = await storage.getAllSeats();
+        availableSeats = allSeats
+          .filter(seat => !seat.isOccupied)
+          .map(seat => seat.seatNumber)
+          .sort(); // Sort to assign seats in order (A-01, A-02, etc.)
+      }
 
       // Process each record
       for (let i = 0; i < records.length; i++) {
@@ -229,15 +240,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Generate QR code
           const qrCode = await QRCode.toDataURL(ticketId);
           
+          // Determine seat assignment
+          let seatNumber = null;
+          let status = "pending";
+          
+          if (autoAssignSeats && availableSeats.length > 0) {
+            seatNumber = availableSeats.shift()!; // Remove and assign the first available seat
+            status = "assigned";
+            
+            // Update the seat as occupied
+            await storage.updateSeat(seatNumber, {
+              isOccupied: true,
+              ticketId
+            });
+            
+            results.seatsAssigned++;
+          }
+          
           // Create ticket
-          await storage.createTicket({
+          const ticket = await storage.createTicket({
             guestName: record.guestName.trim(),
             email: record.email.trim(),
             ticketId,
             qrCode,
-            status: "pending",
-            seatNumber: null
+            status,
+            seatNumber
           });
+
+          // If seat was assigned, update ticket with assignment timestamp
+          if (seatNumber) {
+            await storage.updateTicket(ticket.id, {
+              assignedAt: new Date()
+            });
+          }
 
           results.imported++;
         } catch (error) {
@@ -253,6 +288,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ 
         message: "Failed to import tickets",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Bulk assign seats to all unassigned tickets
+  app.post("/api/tickets/bulk-assign-seats", async (req, res) => {
+    try {
+      const tickets = await storage.getAllTickets();
+      const unassignedTickets = tickets.filter(ticket => ticket.status === "pending");
+      
+      if (unassignedTickets.length === 0) {
+        return res.json({ message: "No unassigned tickets found", assigned: 0 });
+      }
+
+      const allSeats = await storage.getAllSeats();
+      const availableSeats = allSeats
+        .filter(seat => !seat.isOccupied)
+        .map(seat => seat.seatNumber)
+        .sort();
+
+      if (availableSeats.length === 0) {
+        return res.status(400).json({ message: "No available seats" });
+      }
+
+      let assigned = 0;
+      const maxAssignments = Math.min(unassignedTickets.length, availableSeats.length);
+
+      for (let i = 0; i < maxAssignments; i++) {
+        const ticket = unassignedTickets[i];
+        const seatNumber = availableSeats[i];
+
+        // Update seat
+        await storage.updateSeat(seatNumber, {
+          isOccupied: true,
+          ticketId: ticket.ticketId
+        });
+
+        // Update ticket
+        await storage.updateTicket(ticket.id, {
+          seatNumber,
+          status: "assigned",
+          assignedAt: new Date()
+        });
+
+        assigned++;
+      }
+
+      res.json({ 
+        message: `Successfully assigned ${assigned} seats`,
+        assigned,
+        remaining: unassignedTickets.length - assigned
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to bulk assign seats",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }
