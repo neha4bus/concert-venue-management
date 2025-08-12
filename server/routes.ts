@@ -163,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import tickets from CSV or Google Sheets
   app.post("/api/tickets/import", async (req, res) => {
     try {
-      const { csvData, googleSheetUrl, autoAssignSeats = false } = req.body;
+      const { csvData, googleSheetUrl } = req.body;
       let importData = csvData;
 
       // If Google Sheets URL is provided, fetch the CSV data
@@ -209,20 +209,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errors: [] as Array<{ row: number; error: string; data: any }>
       };
 
-      // Get available seats for auto-assignment
-      let availableSeats: string[] = [];
-      if (autoAssignSeats) {
-        const allSeats = await storage.getAllSeats();
-        availableSeats = allSeats
-          .filter(seat => !seat.isOccupied)
-          .map(seat => seat.seatNumber)
-          .sort(); // Sort to assign seats in order (A-01, A-02, etc.)
-      }
+      // Get all seats to validate manual seat assignments
+      const allSeats = await storage.getAllSeats();
+      const seatMap = new Map(allSeats.map(seat => [seat.seatNumber, seat]));
 
       // Process each record
       for (let i = 0; i < records.length; i++) {
         try {
-          const record = records[i] as { guestName?: string; email?: string; [key: string]: any };
+          const record = records[i] as { guestName?: string; email?: string; seatNumber?: string; [key: string]: any };
           
           // Validate required fields
           if (!record.guestName || !record.email) {
@@ -240,12 +234,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Generate QR code
           const qrCode = await QRCode.toDataURL(ticketId);
           
-          // Determine seat assignment
+          // Determine seat assignment from CSV data
           let seatNumber = null;
           let status = "pending";
           
-          if (autoAssignSeats && availableSeats.length > 0) {
-            seatNumber = availableSeats.shift()!; // Remove and assign the first available seat
+          if (record.seatNumber && record.seatNumber.trim()) {
+            const requestedSeat = record.seatNumber.trim();
+            const seat = seatMap.get(requestedSeat);
+            
+            if (!seat) {
+              results.errors.push({
+                row: i + 2,
+                error: `Invalid seat number: ${requestedSeat}`,
+                data: record
+              });
+              continue;
+            }
+            
+            if (seat.isOccupied) {
+              results.errors.push({
+                row: i + 2,
+                error: `Seat ${requestedSeat} is already occupied`,
+                data: record
+              });
+              continue;
+            }
+            
+            seatNumber = requestedSeat;
             status = "assigned";
             
             // Update the seat as occupied

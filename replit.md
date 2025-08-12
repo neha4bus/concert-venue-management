@@ -34,9 +34,11 @@ Preferred communication style: Simple, everyday language.
 ### Key Features
 - **Ticket Management**: Create, view, and manage concert tickets with unique IDs
 - **QR Code Integration**: Generate and scan QR codes for ticket validation
-- **Seat Assignment**: Interactive seat map for venue management
+- **Manual Seat Assignment**: CSV/Google Sheets import with optional seat pre-assignment
+- **Interactive Seat Map**: Visual seat map for venue management and real-time editing
 - **Check-in System**: Guest check-in functionality with status tracking
 - **Dashboard Analytics**: Real-time statistics for venue operations
+- **Bulk Import**: Support for CSV upload and Google Sheets URL import with seat validation
 
 ### Authentication & Security
 - **Session Management**: Express sessions with PostgreSQL store (connect-pg-simple)

@@ -19,19 +19,18 @@ export default function ImportTicketsForm({ open, onClose }: ImportTicketsFormPr
   const [csvData, setCsvData] = useState("");
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
   const [importMethod, setImportMethod] = useState<"csv" | "url">("csv");
-  const [autoAssignSeats, setAutoAssignSeats] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const importTicketsMutation = useMutation({
-    mutationFn: async (data: { csvData?: string; googleSheetUrl?: string; autoAssignSeats?: boolean }) => {
+    mutationFn: async (data: { csvData?: string; googleSheetUrl?: string }) => {
       const response = await apiRequest("POST", "/api/tickets/import", data);
       return response.json();
     },
     onSuccess: (result) => {
-      const seatsMessage = autoAssignSeats && result.seatsAssigned 
-        ? ` ${result.seatsAssigned} seats assigned automatically.`
+      const seatsMessage = result.seatsAssigned 
+        ? ` ${result.seatsAssigned} seats assigned from CSV data.`
         : '';
       toast({
         title: "Import Successful",
@@ -90,8 +89,8 @@ export default function ImportTicketsForm({ open, onClose }: ImportTicketsFormPr
 
     importTicketsMutation.mutate(
       importMethod === "csv" 
-        ? { csvData, autoAssignSeats } 
-        : { googleSheetUrl, autoAssignSeats }
+        ? { csvData } 
+        : { googleSheetUrl }
     );
   };
 
@@ -99,12 +98,11 @@ export default function ImportTicketsForm({ open, onClose }: ImportTicketsFormPr
     setCsvData("");
     setGoogleSheetUrl("");
     setImportMethod("csv");
-    setAutoAssignSeats(true);
     onClose();
   };
 
   const downloadTemplate = () => {
-    const template = "guestName,email\nJohn Doe,john@example.com\nJane Smith,jane@example.com";
+    const template = "guestName,email,seatNumber\nJohn Doe,john@example.com,A-01\nJane Smith,jane@example.com,A-02\nBob Johnson,bob@example.com,";
     const blob = new Blob([template], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -156,7 +154,7 @@ export default function ImportTicketsForm({ open, onClose }: ImportTicketsFormPr
               <div>
                 <p className="font-medium text-blue-900 dark:text-blue-100">CSV Format Required</p>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Columns: guestName, email (header row required)
+                  Columns: guestName, email, seatNumber (optional) - header row required
                 </p>
               </div>
               <Button
@@ -171,23 +169,19 @@ export default function ImportTicketsForm({ open, onClose }: ImportTicketsFormPr
             </div>
           </div>
 
-          {/* Auto-assign Seats Option */}
+          {/* Seat Assignment Info */}
           <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg border border-green-200 dark:border-green-800">
-            <div className="flex items-center space-x-3">
-              <Checkbox
-                id="auto-assign"
-                checked={autoAssignSeats}
-                onCheckedChange={(checked) => setAutoAssignSeats(checked as boolean)}
-              />
+            <div className="flex items-start space-x-3">
+              <Users className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
               <div className="flex-1">
-                <Label htmlFor="auto-assign" className="text-green-900 dark:text-green-100 font-medium">
-                  Auto-assign seats during import
-                </Label>
-                <p className="text-sm text-green-700 dark:text-green-300">
-                  Automatically assign available seats to imported guests (recommended)
-                </p>
+                <p className="font-medium text-green-900 dark:text-green-100">Manual Seat Assignment</p>
+                <ul className="text-sm text-green-700 dark:text-green-300 mt-1 space-y-1">
+                  <li>• Add "seatNumber" column to specify seats (e.g., A-01, B-15)</li>
+                  <li>• Leave empty for guests without assigned seats</li>
+                  <li>• Available seats: A-01 to J-20 (10 rows, 20 seats each)</li>
+                  <li>• You can modify seat assignments later through the dashboard</li>
+                </ul>
               </div>
-              <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
           </div>
 
